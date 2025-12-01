@@ -12,8 +12,8 @@ interface GrandTreeProps {
 const TREE_HEIGHT = 18;
 const TREE_RADIUS = 7;
 const PARTICLE_COUNT = 6000;
-const ORNAMENT_COUNT = 150;
-const POLAROID_COUNT = 12;
+const ORNAMENT_COUNT = 180;
+const POLAROID_COUNT = 24;
 
 export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => {
   const pointsRef = useRef<THREE.Points>(null);
@@ -72,16 +72,17 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
                 (Math.random() - 0.5) * 35,
                 (Math.random() - 0.5) * 35
             ),
-            color: Math.random() > 0.7 ? '#FF0000' : '#FFD700' // Red or Gold
+            color: Math.random() > 0.6 ? '#D4AF37' : '#C41E3A' // More Gold, some Deep Red
         });
     }
 
     // Polaroids
     const pData = [];
     for (let i = 0; i < POLAROID_COUNT; i++) {
-         const y = Math.random() * (TREE_HEIGHT * 0.7) + 2; // Lower 70%
-         const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS * 1.1; // Float slightly outside
-         const angle = (i / POLAROID_COUNT) * Math.PI * 2;
+         // Spiral distribution for polaroids
+         const y = (i / POLAROID_COUNT) * TREE_HEIGHT * 0.8 + 1; // Spread along height
+         const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS * 1.15; // Float slightly outside
+         const angle = i * 2.5; // Golden angle-ish
          
          pData.push({
             target: new THREE.Vector3(
@@ -90,9 +91,9 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
                 radiusAtY * Math.sin(angle)
             ),
             chaos: new THREE.Vector3(
-                (Math.random() - 0.5) * 40,
-                (Math.random() - 0.5) * 40,
-                (Math.random() - 0.5) * 40
+                (Math.random() - 0.5) * 45,
+                (Math.random() - 0.5) * 45,
+                (Math.random() - 0.5) * 45
             ),
             rotation: new THREE.Euler(0, -angle, Math.random() * 0.4 - 0.2)
          });
@@ -117,7 +118,7 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
 
     // Rotate the whole tree slowly when formed
     if (groupRef.current) {
-        groupRef.current.rotation.y += delta * 0.1 * currentProgress.current;
+        groupRef.current.rotation.y += delta * 0.08 * currentProgress.current;
     }
   });
 
@@ -155,10 +156,7 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
         <foliageMaterial ref={materialRef} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
       </points>
 
-      {/* Ornaments - Using individual meshes for simplicity with lerping logic inside a wrapper would be expensive, 
-          but for 150 items, React components are fine. For max perf, InstancedMesh is better, but complex to animate chaos/target dual positions. 
-          Let's use a helper component for each Ornament.
-      */}
+      {/* Ornaments */}
       {ornamentData.map((data, i) => (
          <FloatingItem 
             key={`orn-${i}`} 
@@ -167,13 +165,13 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
             progressRef={currentProgress}
          >
             <mesh castShadow receiveShadow>
-                <sphereGeometry args={[0.25, 16, 16]} />
+                <sphereGeometry args={[0.22, 16, 16]} />
                 <meshStandardMaterial 
                     color={data.color} 
-                    metalness={1} 
+                    metalness={0.9} 
                     roughness={0.1} 
                     emissive={data.color}
-                    emissiveIntensity={0.2}
+                    emissiveIntensity={0.3}
                 />
             </mesh>
          </FloatingItem>
@@ -188,20 +186,20 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
             progressRef={currentProgress}
             finalRotation={data.rotation}
           >
-             <group scale={0.8}>
+             <group scale={0.75}>
                 {/* Frame */}
                 <mesh position={[0, 0, -0.01]}>
                     <boxGeometry args={[1.2, 1.5, 0.05]} />
-                    <meshStandardMaterial color="#fffff0" roughness={0.8} />
+                    <meshStandardMaterial color="#fffff0" roughness={0.9} />
                 </mesh>
                 {/* Photo */}
-                <Image url={`https://picsum.photos/seed/${i + 100}/200/200`} position={[0, 0.2, 0.03]} scale={[1, 1]} />
+                <Image url={`https://picsum.photos/seed/${i + 200}/300/300`} position={[0, 0.2, 0.03]} scale={[1, 1]} />
                 {/* Greeting Text */}
                 <Text 
                     position={[0, -0.5, 0.04]} 
-                    fontSize={0.1} 
+                    fontSize={0.09} 
                     color="#1a1a1a"
-                    font="https://fonts.gstatic.com/s/cinzel/v11/8vIJ7ww63mVu7gt78Uk.woff" // Cinzel font url
+                    font="https://fonts.gstatic.com/s/cinzel/v11/8vIJ7ww63mVu7gt78Uk.woff"
                     anchorX="center"
                     anchorY="middle"
                     maxWidth={1}
@@ -218,7 +216,7 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
 // Helper for lerping items
 const FloatingItem = ({ chaos, target, progressRef, children, finalRotation }: any) => {
     const ref = useRef<THREE.Group>(null);
-    useFrame(() => {
+    useFrame((state) => {
         if (!ref.current) return;
         const t = progressRef.current;
         // Cubic ease out
@@ -226,13 +224,12 @@ const FloatingItem = ({ chaos, target, progressRef, children, finalRotation }: a
         
         ref.current.position.lerpVectors(chaos, target, smoothT);
         
+        // Add subtle floating motion when formed
+        if (t > 0.9) {
+            ref.current.position.y += Math.sin(state.clock.elapsedTime * 2 + chaos.x) * 0.002;
+        }
+        
         if (finalRotation) {
-            // Chaos rotation is random, target is fixed
-            // Simple approach: look at center when formed
-            const qChaos = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.random(), Math.random(), Math.random()));
-            const qTarget = new THREE.Quaternion().setFromEuler(finalRotation);
-            // Slerp requires stable frames, let's just use Euler lerp approximation for visual style
-            // Actually, simplest is just to set rotation based on T
             ref.current.rotation.set(
                 THREE.MathUtils.lerp(1, finalRotation.x, smoothT),
                 THREE.MathUtils.lerp(1, finalRotation.y, smoothT),

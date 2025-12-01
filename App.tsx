@@ -82,7 +82,7 @@ const App: React.FC = () => {
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
         </Suspense>
 
-        <EffectComposer disableNormalPass>
+        <EffectComposer enableNormalPass={false}>
            {/* Luxury Glow */}
           <Bloom luminanceThreshold={0.8} mipmapBlur intensity={1.5} radius={0.6} />
           <Vignette eskil={false} offset={0.1} darkness={0.7} />
