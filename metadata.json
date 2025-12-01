@@ -1,0 +1,7 @@
+{
+  "name": "Grand Luxury Interactive Tree",
+  "description": "A cinematic, Trump-style luxury Christmas experience featuring a transforming golden emerald tree, AI-generated greetings, and interactive hand-gesture control.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
