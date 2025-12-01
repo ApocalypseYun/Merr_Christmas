@@ -1,24 +1,45 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const API_KEY = process.env.API_KEY || '';
+// Safe access to process.env for browser environments
+const getApiKey = () => {
+    try {
+        if (typeof process !== 'undefined' && process.env) {
+            return process.env.API_KEY || '';
+        }
+        // Fallback if window.process is polyfilled
+        // @ts-ignore
+        if (typeof window !== 'undefined' && window.process && window.process.env) {
+             // @ts-ignore
+            return window.process.env.API_KEY || '';
+        }
+    } catch (e) {
+        return '';
+    }
+    return '';
+}
+
+const API_KEY = getApiKey();
 
 export const generateLuxuryGreetings = async (): Promise<string[]> => {
+  const defaults = [
+      "GOLDEN ERA",
+      "PURE LUXURY",
+      "WINNING SEASON",
+      "GRAND CHRISTMAS",
+      "RICH & MERRY",
+      "SUCCESS 2025"
+  ];
+
   if (!API_KEY) {
-    console.warn("No API Key found, using fallback greetings.");
-    return [
-      "Merry Christmas",
-      "Golden Holidays",
-      "Luxury Awaits",
-      "Grand Celebration",
-      "Prosperity & Joy"
-    ];
+    console.log("Using default luxury greetings (No API Key)");
+    return defaults;
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: "Generate 6 short, ultra-luxury, high-class Christmas greetings (max 4 words each) suitable for a gold-themed gala.",
+      contents: "Generate 6 ultra-short (2 words max) extremely luxury, wealthy, high-status Christmas greetings. Use words like Gold, Grand, Rich, Elite.",
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -31,10 +52,11 @@ export const generateLuxuryGreetings = async (): Promise<string[]> => {
     });
 
     const text = response.text;
-    if (!text) return ["Seasons Greetings"];
-    return JSON.parse(text) as string[];
+    if (!text) return defaults;
+    const result = JSON.parse(text) as string[];
+    return result.length > 0 ? result : defaults;
   } catch (error) {
-    console.error("Gemini Greeting Error:", error);
-    return ["Merry Christmas", "Pure Luxury", "Golden Season", "Grand Joy"];
+    console.warn("Gemini Greeting Error, using defaults:", error);
+    return defaults;
   }
 };

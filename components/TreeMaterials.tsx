@@ -2,13 +2,12 @@ import * as THREE from 'three';
 import { extend } from '@react-three/fiber';
 import { shaderMaterial } from '@react-three/drei';
 
-// A deep emerald shader with gold glint
 const FoliageMaterial = shaderMaterial(
   {
     uTime: 0,
-    uProgress: 0, // 0 = Chaos, 1 = Formed
-    uColorBase: new THREE.Color('#002810'), // Deep Emerald
-    uColorTip: new THREE.Color('#D4AF37'), // Gold
+    uProgress: 0, 
+    uColorBase: new THREE.Color('#003311'), 
+    uColorTip: new THREE.Color('#FFD700'), 
   },
   // Vertex Shader
   `
@@ -23,7 +22,6 @@ const FoliageMaterial = shaderMaterial(
     uniform float uProgress;
     uniform float uTime;
 
-    // Cubic easing for smooth transition
     float easeOutCubic(float x) {
         return 1.0 - pow(1.0 - x, 3.0);
     }
@@ -32,10 +30,8 @@ const FoliageMaterial = shaderMaterial(
       vUv = uv;
       vRandom = aRandom;
 
-      // Interpolate position
       float t = easeOutCubic(uProgress);
       
-      // Add some noise movement when in chaos mode
       vec3 chaosOffset = vec3(
         sin(uTime * 0.5 + aChaosPos.y) * 0.5,
         cos(uTime * 0.3 + aChaosPos.x) * 0.5,
@@ -46,10 +42,11 @@ const FoliageMaterial = shaderMaterial(
       
       vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
       
-      // Scale particles based on depth and progress
-      gl_PointSize = (6.0 * aRandom + 4.0) * (1.0 / -mvPosition.z);
-      // Make them slightly larger when formed to look dense
-      gl_PointSize *= (0.5 + 0.5 * t);
+      gl_PointSize = (6.0 * aRandom + 5.0) * (1.0 / -mvPosition.z);
+      gl_PointSize *= (0.5 + 0.6 * t);
+      
+      // Safety clamp
+      if (gl_PointSize < 2.0) gl_PointSize = 2.0;
 
       gl_Position = projectionMatrix * mvPosition;
       vDepth = -mvPosition.z;
@@ -63,24 +60,24 @@ const FoliageMaterial = shaderMaterial(
     varying float vRandom;
 
     void main() {
-      // Circular particle
       vec2 coord = gl_PointCoord - vec2(0.5);
       if(length(coord) > 0.5) discard;
 
-      // Gradient from center to edge
       float strength = distance(gl_PointCoord, vec2(0.5));
       
-      // Mix base emerald with gold tips based on randomness
-      vec3 finalColor = mix(uColorBase, uColorTip, vRandom * 0.4);
+      vec3 finalColor = mix(uColorBase, uColorTip, vRandom * 0.5);
       
-      // Add a high-light center
-      finalColor += vec3(0.2) * (1.0 - strength * 2.0);
+      // Sparkle center
+      if (strength < 0.15) {
+        finalColor += vec3(0.6);
+      }
 
       gl_FragColor = vec4(finalColor, 1.0);
     }
   `
 );
 
+// Register it
 extend({ FoliageMaterial });
 
 export { FoliageMaterial };

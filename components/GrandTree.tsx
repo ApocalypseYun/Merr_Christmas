@@ -1,8 +1,8 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Text, Image } from '@react-three/drei';
-import { FoliageMaterial } from './TreeMaterials';
+import { Text } from '@react-three/drei';
+import './TreeMaterials'; // Ensure side-effects (extend) run
 
 interface GrandTreeProps {
   isFormed: boolean;
@@ -11,9 +11,9 @@ interface GrandTreeProps {
 
 const TREE_HEIGHT = 18;
 const TREE_RADIUS = 7;
-const PARTICLE_COUNT = 6000;
-const ORNAMENT_COUNT = 180;
-const POLAROID_COUNT = 24;
+const PARTICLE_COUNT = 4500; // Reduced slightly for stability
+const ORNAMENT_COUNT = 150;
+const CARD_COUNT = 16; // "Polaroids" -> "Luxury Cards"
 
 export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => {
   const pointsRef = useRef<THREE.Points>(null);
@@ -21,7 +21,7 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
   const groupRef = useRef<THREE.Group>(null);
   
   // -- Geometry Generation --
-  const { positions, chaosPositions, randoms, ornamentData, polaroidData } = useMemo(() => {
+  const { positions, chaosPositions, randoms, ornamentData, cardData } = useMemo(() => {
     const pos = new Float32Array(PARTICLE_COUNT * 3);
     const chaos = new Float32Array(PARTICLE_COUNT * 3);
     const rands = new Float32Array(PARTICLE_COUNT);
@@ -29,22 +29,22 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
     // Needles
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       // Target: Cone shape
-      const y = Math.random() * TREE_HEIGHT; // 0 to Height
+      const y = Math.random() * TREE_HEIGHT;
       const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS;
       const angle = Math.random() * Math.PI * 2;
-      const r = Math.random() * radiusAtY; // Fill volume
+      const r = Math.random() * radiusAtY;
       
       const x = r * Math.cos(angle);
       const z = r * Math.sin(angle);
 
       pos[i * 3] = x;
-      pos[i * 3 + 1] = y - TREE_HEIGHT / 2 + 2; // Center vertically
+      pos[i * 3 + 1] = y - TREE_HEIGHT / 2 + 2;
       pos[i * 3 + 2] = z;
 
       // Chaos: Sphere cloud
-      const cx = (Math.random() - 0.5) * 30;
-      const cy = (Math.random() - 0.5) * 30;
-      const cz = (Math.random() - 0.5) * 30;
+      const cx = (Math.random() - 0.5) * 35;
+      const cy = (Math.random() - 0.5) * 35;
+      const cz = (Math.random() - 0.5) * 35;
 
       chaos[i * 3] = cx;
       chaos[i * 3 + 1] = cy;
@@ -57,8 +57,7 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
     const oData = [];
     for (let i = 0; i < ORNAMENT_COUNT; i++) {
         const y = Math.random() * TREE_HEIGHT;
-        // Surface only
-        const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS * 0.9; 
+        const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS * 0.95; 
         const angle = Math.random() * Math.PI * 2;
         
         oData.push({
@@ -68,42 +67,40 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
                 radiusAtY * Math.sin(angle)
             ),
             chaos: new THREE.Vector3(
-                (Math.random() - 0.5) * 35,
-                (Math.random() - 0.5) * 35,
-                (Math.random() - 0.5) * 35
+                (Math.random() - 0.5) * 40,
+                (Math.random() - 0.5) * 40,
+                (Math.random() - 0.5) * 40
             ),
-            color: Math.random() > 0.6 ? '#D4AF37' : '#C41E3A' // More Gold, some Deep Red
+            color: Math.random() > 0.6 ? '#FFD700' : '#8B0000' // Gold & Deep Red
         });
     }
 
-    // Polaroids
-    const pData = [];
-    for (let i = 0; i < POLAROID_COUNT; i++) {
-         // Spiral distribution for polaroids
-         const y = (i / POLAROID_COUNT) * TREE_HEIGHT * 0.8 + 1; // Spread along height
-         const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS * 1.15; // Float slightly outside
-         const angle = i * 2.5; // Golden angle-ish
+    // Luxury Cards (Replacing Polaroids)
+    const cData = [];
+    for (let i = 0; i < CARD_COUNT; i++) {
+         const y = (i / CARD_COUNT) * TREE_HEIGHT * 0.7 + 2;
+         const radiusAtY = (1 - y / TREE_HEIGHT) * TREE_RADIUS * 1.2; 
+         const angle = i * 2.4; 
          
-         pData.push({
+         cData.push({
             target: new THREE.Vector3(
                 radiusAtY * Math.cos(angle),
                 y - TREE_HEIGHT / 2 + 2,
                 radiusAtY * Math.sin(angle)
             ),
             chaos: new THREE.Vector3(
-                (Math.random() - 0.5) * 45,
-                (Math.random() - 0.5) * 45,
-                (Math.random() - 0.5) * 45
+                (Math.random() - 0.5) * 50,
+                (Math.random() - 0.5) * 50,
+                (Math.random() - 0.5) * 50
             ),
-            rotation: new THREE.Euler(0, -angle, Math.random() * 0.4 - 0.2)
+            rotation: new THREE.Euler(0, -angle + Math.PI/2, 0)
          });
     }
 
-    return { positions: pos, chaosPositions: chaos, randoms: rands, ornamentData: oData, polaroidData: pData };
+    return { positions: pos, chaosPositions: chaos, randoms: rands, ornamentData: oData, cardData: cData };
   }, []);
 
   // -- Animation Loop --
-  // Using a ref for current progress to smooth it out manually
   const currentProgress = useRef(0);
 
   useFrame((state, delta) => {
@@ -116,21 +113,21 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
       materialRef.current.uProgress = currentProgress.current;
     }
 
-    // Rotate the whole tree slowly when formed
     if (groupRef.current) {
-        groupRef.current.rotation.y += delta * 0.08 * currentProgress.current;
+        // Slow rotation when formed
+        groupRef.current.rotation.y += delta * 0.05 * currentProgress.current;
     }
   });
 
   return (
     <group ref={groupRef}>
-      {/* The Foliage Particles */}
+      {/* Foliage */}
       <points ref={pointsRef}>
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
             count={positions.length / 3}
-            array={positions} // Initial positions (Target) - shader handles mix
+            array={positions}
             itemSize={3}
           />
           <bufferAttribute
@@ -152,7 +149,7 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
             itemSize={1}
           />
         </bufferGeometry>
-        {/* @ts-ignore - Custom Shader Material defined in extend */}
+        {/* @ts-ignore */}
         <foliageMaterial ref={materialRef} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
       </points>
 
@@ -165,75 +162,80 @@ export const GrandTree: React.FC<GrandTreeProps> = ({ isFormed, greetings }) => 
             progressRef={currentProgress}
          >
             <mesh castShadow receiveShadow>
-                <sphereGeometry args={[0.22, 16, 16]} />
+                <sphereGeometry args={[0.25, 16, 16]} />
                 <meshStandardMaterial 
                     color={data.color} 
                     metalness={0.9} 
                     roughness={0.1} 
-                    emissive={data.color}
-                    emissiveIntensity={0.3}
                 />
             </mesh>
          </FloatingItem>
       ))}
 
-      {/* Polaroids */}
-      {polaroidData.map((data, i) => (
+      {/* Luxury Cards */}
+      {cardData.map((data, i) => (
           <FloatingItem
-            key={`pol-${i}`}
+            key={`card-${i}`}
             chaos={data.chaos}
             target={data.target}
             progressRef={currentProgress}
             finalRotation={data.rotation}
           >
-             <group scale={0.75}>
-                {/* Frame */}
-                <mesh position={[0, 0, -0.01]}>
-                    <boxGeometry args={[1.2, 1.5, 0.05]} />
-                    <meshStandardMaterial color="#fffff0" roughness={0.9} />
-                </mesh>
-                {/* Photo */}
-                <Image url={`https://picsum.photos/seed/${i + 200}/300/300`} position={[0, 0.2, 0.03]} scale={[1, 1]} />
-                {/* Greeting Text */}
-                <Text 
-                    position={[0, -0.5, 0.04]} 
-                    fontSize={0.09} 
-                    color="#1a1a1a"
-                    font="https://fonts.gstatic.com/s/cinzel/v11/8vIJ7ww63mVu7gt78Uk.woff"
-                    anchorX="center"
-                    anchorY="middle"
-                    maxWidth={1}
-                >
-                    {greetings[i % greetings.length] || "Merry Xmas"}
-                </Text>
-             </group>
+             <LuxuryCard text={greetings[i % greetings.length] || "LUXURY"} />
           </FloatingItem>
       ))}
     </group>
   );
 };
 
-// Helper for lerping items
+// Component for the "Card" replacing the image
+const LuxuryCard = ({ text }: { text: string }) => {
+  return (
+    <group>
+      {/* Gold Border */}
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[1.6, 1.0, 0.05]} />
+        <meshStandardMaterial color="#D4AF37" metalness={1} roughness={0.1} />
+      </mesh>
+      {/* Ivory Center */}
+      <mesh position={[0, 0, 0.03]}>
+        <boxGeometry args={[1.5, 0.9, 0.01]} />
+        <meshStandardMaterial color="#FFFFF0" roughness={0.8} />
+      </mesh>
+      {/* Text */}
+      <Text 
+        position={[0, 0, 0.04]} 
+        fontSize={0.15} 
+        color="#111"
+        font="https://fonts.gstatic.com/s/cinzel/v11/8vIJ7ww63mVu7gt78Uk.woff"
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={1.4}
+      >
+        {text}
+      </Text>
+    </group>
+  )
+}
+
 const FloatingItem = ({ chaos, target, progressRef, children, finalRotation }: any) => {
     const ref = useRef<THREE.Group>(null);
     useFrame((state) => {
         if (!ref.current) return;
         const t = progressRef.current;
-        // Cubic ease out
         const smoothT = 1 - Math.pow(1 - t, 3);
         
         ref.current.position.lerpVectors(chaos, target, smoothT);
         
-        // Add subtle floating motion when formed
         if (t > 0.9) {
             ref.current.position.y += Math.sin(state.clock.elapsedTime * 2 + chaos.x) * 0.002;
         }
         
         if (finalRotation) {
             ref.current.rotation.set(
-                THREE.MathUtils.lerp(1, finalRotation.x, smoothT),
-                THREE.MathUtils.lerp(1, finalRotation.y, smoothT),
-                THREE.MathUtils.lerp(1, finalRotation.z, smoothT)
+                THREE.MathUtils.lerp(chaos.x * 0.1, finalRotation.x, smoothT),
+                THREE.MathUtils.lerp(chaos.y * 0.1, finalRotation.y, smoothT),
+                THREE.MathUtils.lerp(chaos.z * 0.1, finalRotation.z, smoothT)
             );
         }
     });
