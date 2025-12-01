@@ -8,11 +8,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <script>
+      // Polyfill process.env for browser preview environments that don't use a bundler
+      window.process = window.process || { env: { API_KEY: '' } };
+    </script>
     <style>
       body { margin: 0; background-color: #020402; overflow: hidden; }
       canvas { width: 100vw; height: 100vh; display: block; }
-      .font-luxury { family: 'Cinzel', serif; }
-      .font-body { family: 'Playfair Display', serif; }
+      .font-luxury { font-family: 'Cinzel', serif; }
+      .font-body { font-family: 'Playfair Display', serif; }
+      /* Loader styles */
+      .loader {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        color: #D4AF37; font-family: 'Cinzel', serif; text-align: center;
+        z-index: 100;
+        pointer-events: none;
+      }
     </style>
   <script type="importmap">
 {
@@ -27,8 +38,8 @@
     "three": "https://aistudiocdn.com/three@^0.181.2",
     "@react-three/postprocessing": "https://aistudiocdn.com/@react-three/postprocessing@^3.0.4",
     "react-webcam": "https://aistudiocdn.com/react-webcam@^7.2.0",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.6"
+    "vite": "https://aistudiocdn.com/vite@^7.2.6",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
   }
 }
 </script>

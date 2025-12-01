@@ -1,6 +1,6 @@
-import React, { useState, useEffect, Suspense, useRef } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, PerspectiveCamera, Stars } from '@react-three/drei';
+import { Environment, PerspectiveCamera, Stars, Html, useProgress } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
@@ -21,6 +21,18 @@ const CameraRig = ({ delta }: { delta: { x: number; y: number } }) => {
     state.camera.lookAt(0, 4, 0);
   });
   return null;
+};
+
+const Loader = () => {
+  const { progress } = useProgress();
+  return (
+    <Html center>
+      <div className="loader">
+        <h2 className="text-2xl md:text-4xl">LOADING LUXURY</h2>
+        <p className="text-sm mt-2 tracking-widest">{progress.toFixed(0)}%</p>
+      </div>
+    </Html>
+  );
 };
 
 const App: React.FC = () => {
@@ -75,7 +87,7 @@ const App: React.FC = () => {
         <spotLight position={[10, 20, 10]} angle={0.3} penumbra={1} intensity={2} castShadow shadow-bias={-0.0001} color="#fffaed" />
         <pointLight position={[-10, 5, -10]} intensity={1} color="#00ff88" />
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<Loader />}>
             <GrandTree isFormed={!unleashed} greetings={greetings} />
             {/* Cinematic Environment */}
             <Environment preset="lobby" background={false} /> 
